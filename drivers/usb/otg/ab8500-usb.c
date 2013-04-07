@@ -996,9 +996,7 @@ static int __devinit ab8500_usb_probe(struct platform_device *pdev)
 	otg->phy		= &ab->phy;
 	otg->set_host		= ab8500_usb_set_host;
 	otg->set_peripheral	= ab8500_usb_set_peripheral;
-#ifdef CONFIG_USB_OTG_20
-	ab->otg.start_srp	= ab8500_usb_start_srp;
-#endif
+
 	ab->sysfs_flag		= true;
 
 	platform_set_drvdata(pdev, ab);

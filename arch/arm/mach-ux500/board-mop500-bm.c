@@ -16,47 +16,12 @@
 #include <linux/mfd/ab8500/pwmleds.h>
 #include "board-mop500-bm.h"
 
-#ifdef CONFIG_AB8500_BATTERY_THERM_ON_BATCTRL
 /*
  * These are the defined batteries that uses a NTC and ID resistor placed
  * inside of the battery pack.
  * Note that the res_to_temp table must be strictly sorted by falling resistance
  * values to work.
  */
-static struct abx500_res_to_temp temp_tbl_A[] = {
-	{-5, 53407},
-	{ 0, 48594},
-	{ 5, 43804},
-	{10, 39188},
-	{15, 34870},
-	{20, 30933},
-	{25, 27422},
-	{30, 24347},
-	{35, 21694},
-	{40, 19431},
-	{45, 17517},
-	{50, 15908},
-	{55, 14561},
-	{60, 13437},
-	{65, 12500},
-};
-static struct abx500_res_to_temp temp_tbl_B[] = {
-	{-5, 165418},
-	{ 0, 159024},
-	{ 5, 151921},
-	{10, 144300},
-	{15, 136424},
-	{20, 128565},
-	{25, 120978},
-	{30, 113875},
-	{35, 107397},
-	{40, 101629},
-	{45,  96592},
-	{50,  92253},
-	{55,  88569},
-	{60,  85461},
-	{65,  82869},
-};
 static struct abx500_v_to_cap cap_tbl_A[] = {
 	{4171,	100},
 	{4114,	 95},
@@ -78,6 +43,53 @@ static struct abx500_v_to_cap cap_tbl_A[] = {
 	{3560,	  3},
 	{3408,    1},
 	{3247,	  0},
+};
+#ifdef CONFIG_AB8500_BATTERY_THERM_ON_BATCTRL
+/*
+ * These are the defined batteries that uses a NTC and ID resistor placed
+ * inside of the battery pack.
+ * Note that the res_to_temp table must be strictly sorted by falling resistance
+ * values to work.
+ */
+/* SEMC Type 1 battery */
+static struct res_to_temp temp_tbl_A[] = {
+	{-20, 67400},
+	{  0, 49200},
+	{  5, 44200},
+	{ 10, 39400},
+	{ 15, 35000},
+	{ 20, 31000},
+	{ 25, 27400},
+	{ 30, 24300},
+	{ 35, 21700},
+	{ 40, 19400},
+	{ 45, 17500},
+	{ 50, 15900},
+	{ 55, 14600},
+	{ 60, 13500},
+	{ 65, 12500},
+	{ 70, 11800},
+	{100,  9200},
+};
+/* SEMC Type 2 battery */
+static struct res_to_temp temp_tbl_B[] = {
+	{-20, 180700},
+	{  0, 160000},
+	{  5, 152700},
+	{ 10, 144900},
+	{ 15, 136800},
+	{ 20, 128700},
+	{ 25, 121000},
+	{ 30, 113800},
+	{ 35, 107300},
+	{ 40, 101500},
+	{ 45,  96500},
+	{ 50,  92200},
+	{ 55,  88600},
+	{ 60,  85600},
+	{ 65,  83000},
+	{ 70,  80900},
+	{100,  73900},
 };
 static struct abx500_v_to_cap cap_tbl_B[] = {
 	{4161,	100},

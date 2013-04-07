@@ -76,6 +76,7 @@
  */
 #define TEE_STA_GET_PRODUCT_CONFIG		10
 #define TEE_STA_SET_L2CC_PREFETCH_CTRL_REGISTER 11
+#define TEE_STA_OPEN_SHARED_MEMORY 39
 
 /* Flags indicating run-time environment */
 #define TEE_RT_FLAGS_NORMAL		0x00000000

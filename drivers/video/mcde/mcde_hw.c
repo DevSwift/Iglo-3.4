@@ -1493,6 +1493,7 @@ static void update_overlay_registers(u8 idx, struct ovly_regs *regs,
 	u32 pixelfetchwtrmrklevel;
 	u8  nr_of_bufs = 1;
 	u32 sel_mod = MCDE_EXTSRC0CR_SEL_MOD_SOFTWARE_SEL;
+	struct mcde_platform_data *pdata = mcde_dev->dev.platform_data;
 
 	if (rotation == MCDE_DISPLAY_ROT_180_CCW) {
 		ljinc = -ljinc;
@@ -1509,6 +1510,30 @@ static void update_overlay_registers(u8 idx, struct ovly_regs *regs,
 		ljinc *= 2;
 	}
 
+pixelfetchwtrmrklevel = pdata->pixelfetchwtrmrk[idx];
+	if (pixelfetchwtrmrklevel == 0) {
+		/* Not set: Use default value */
+		switch (idx) {
+		case 0:
+			pixelfetchwtrmrklevel = MCDE_PIXFETCH_WTRMRKLVL_OVL0;
+			break;
+		case 1:
+			pixelfetchwtrmrklevel = MCDE_PIXFETCH_WTRMRKLVL_OVL1;
+			break;
+		case 2:
+			pixelfetchwtrmrklevel = MCDE_PIXFETCH_WTRMRKLVL_OVL2;
+			break;
+		case 3:
+			pixelfetchwtrmrklevel = MCDE_PIXFETCH_WTRMRKLVL_OVL3;
+			break;
+		case 4:
+			pixelfetchwtrmrklevel = MCDE_PIXFETCH_WTRMRKLVL_OVL4;
+			break;
+		case 5:
+			pixelfetchwtrmrklevel = MCDE_PIXFETCH_WTRMRKLVL_OVL5;
+			break;
+		}
+	}
 	if ((fifo == MCDE_FIFO_A || fifo == MCDE_FIFO_B) &&
 			regs->ppl >= SCREEN_PPL_HIGH)
 		pixelfetchwtrmrklevel = input_fifo_size * 2;
@@ -3126,7 +3151,6 @@ int mcde_chnl_apply(struct mcde_chnl_state *chnl)
 }
 
 int mcde_chnl_update(struct mcde_chnl_state *chnl,
-					struct mcde_rectangle *update_area,
 					bool tripple_buffer)
 {
 	int ret;
@@ -3148,7 +3172,6 @@ int mcde_chnl_update(struct mcde_chnl_state *chnl,
 		chnl->esram_is_enabled = false;
 	}
 
-	ret = _mcde_chnl_update(chnl, update_area, tripple_buffer);
 
 	mcde_unlock(__func__, __LINE__);
 
@@ -3221,6 +3244,77 @@ void mcde_chnl_disable(struct mcde_chnl_state *chnl)
 	mcde_unlock(__func__, __LINE__);
 
 	dev_vdbg(&mcde_dev->dev, "%s exit\n", __func__);
+}
+
+void mcde_disable_ulpm_support(bool disable)
+{
+	mcde_lock(__func__, __LINE__);
+	if (disable)
+		disable_ulpm = true;
+	else
+		disable_ulpm = false;
+	mcde_unlock(__func__, __LINE__);
+}
+
+void set_rgb_extra_matrix(struct mcde_oled_transform *matrix)
+{
+	/* Only reset oled matrix for channel 0 */
+	struct mcde_chnl_state *chnl = &channels[0];
+
+	mcde_lock(__func__, __LINE__);
+
+	if (chnl)
+		chnl->oled_transform = NULL;
+	rgb_2_rgb_extra = *matrix;
+	mcde_unlock(__func__, __LINE__);
+}
+
+struct mcde_oled_transform *get_rgb_extra_matrix(void)
+{
+	return &rgb_2_rgb_extra;
+}
+
+void set_yuv_extra_matrix(struct mcde_oled_transform *matrix)
+{
+	/* Only reset oled matrix for channel 0 */
+	struct mcde_chnl_state *chnl = &channels[0];
+
+	mcde_lock(__func__, __LINE__);
+	if (chnl)
+		chnl->oled_transform = NULL;
+	yuv240_2_rgb_extra = *matrix;
+	mcde_unlock(__func__, __LINE__);
+}
+
+struct mcde_oled_transform *get_yuv_extra_matrix(void)
+{
+	return &yuv240_2_rgb_extra;
+}
+
+void mcde_extra_oled_conversion(bool enable)
+{
+	struct mcde_chnl_state *chnl = &channels[0];
+
+	apply_extra_oled_color_conv = enable;
+	if (apply_extra_oled_color_conv) {
+		if (chnl->regs.background_yuv) {
+			dev_dbg(&mcde_dev->dev, "%s: yuv240_2_rgb_extra\n",
+								__func__);
+			mcde_chnl_oled_convert_apply(chnl, &yuv240_2_rgb_extra);
+		} else {
+			dev_dbg(&mcde_dev->dev, "%s: rgb_2_rgb_extra\n",
+								__func__);
+			mcde_chnl_oled_convert_apply(chnl, &rgb_2_rgb_extra);
+		}
+	} else {
+		if (chnl->regs.background_yuv) {
+			dev_dbg(&mcde_dev->dev, "%s: yuv240_2_rgb\n", __func__);
+			mcde_chnl_oled_convert_apply(chnl, &yuv240_2_rgb);
+		} else {
+			dev_dbg(&mcde_dev->dev, "%s: disable oled\n", __func__);
+			chnl->regs.oled_enable = false;
+		}
+	}
 }
 
 /* MCDE overlays */

@@ -62,6 +62,7 @@ struct mcde_display_device {
 	enum mcde_display_rotation orientation;
 	struct mcde_video_mode video_mode;
 	int update_flags;
+	bool deep_standby_as_power_off;
 	bool stay_alive;
 	int check_transparency;
 
@@ -100,7 +101,10 @@ struct mcde_display_device {
 	int (*invalidate_area)(struct mcde_display_device *dev,
 						struct mcde_rectangle *area);
 	int (*update)(struct mcde_display_device *dev, bool tripple_buffer);
+	int (*prepare_for_update)(struct mcde_display_device *dev,
+		u16 x, u16 y, u16 w, u16 h);
 	int (*on_first_update)(struct mcde_display_device *dev);
+	int (*platform_reset)(struct mcde_display_device *dev, bool level);
 	int (*platform_enable)(struct mcde_display_device *dev);
 	int (*platform_disable)(struct mcde_display_device *dev);
 	int (*ceanr_convert)(struct mcde_display_device *ddev,

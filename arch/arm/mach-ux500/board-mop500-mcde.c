@@ -390,19 +390,6 @@ static int display_postregistered_callback(struct notifier_block *nb,
 	}
 #endif
 
-#ifdef CONFIG_COMPDEV
-	mfb = to_mcde_fb(fbi);
-	/* Create a compdev overlay for this display */
-	if (compdev_create(ddev, mfb->ovlys[0], true) < 0) {
-		dev_warn(&ddev->dev,
-			"Failed to create compdev for display %s\n",
-					ddev->name);
-		goto display_postregistered_callback_err;
-	} else {
-		dev_info(&ddev->dev, "compdev created for (%s)\n",
-					ddev->name);
-	}
-#endif
 
 out:
 	return 0;
@@ -493,7 +480,7 @@ static int __init init_display_devices(void)
 		 * The TV CLK is used as parent for the
 		 * DSI LP clock.
 		 */
-		clk_tv = clk_get(&u8500_mcde_device.dev, "tv");
+		clk_tv = clk_get(&ux500_mcde_device.dev, "tv");
 		if (TV_FREQ_HZ != clk_round_rate(clk_tv, TV_FREQ_HZ))
 			pr_warning("%s: TV_CLK freq differs %ld\n", __func__,
 					clk_round_rate(clk_tv, TV_FREQ_HZ));
@@ -504,7 +491,7 @@ static int __init init_display_devices(void)
 		 * The HDMI CLK is used as parent for the
 		 * DSI HS clock.
 		 */
-		clk_hdmi = clk_get(&u8500_mcde_device.dev, "hdmi");
+		clk_hdmi = clk_get(&ux500_mcde_device.dev, "hdmi");
 		if (HDMI_FREQ_HZ != clk_round_rate(clk_hdmi, HDMI_FREQ_HZ))
 			pr_warning("%s: HDMI freq differs %ld\n", __func__,
 					clk_round_rate(clk_hdmi, HDMI_FREQ_HZ));
@@ -515,7 +502,7 @@ static int __init init_display_devices(void)
 		 * The DSI PLL CLK is used as DSI PLL for direct freq for
 		 * link 2. Link 0/1 is then divided with 1/2/4 from this freq.
 		 */
-		clk_dsi_pll = clk_get(&u8500_mcde_device.dev, "dsihs2");
+		clk_dsi_pll = clk_get(&ux500_mcde_device.dev, "dsihs2");
 		if (DSI_PLL_FREQ_HZ != clk_round_rate(clk_dsi_pll,
 							DSI_PLL_FREQ_HZ))
 			pr_warning("%s: DSI_PLL freq differs %ld\n", __func__,

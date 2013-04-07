@@ -142,6 +142,36 @@ struct ieee80211_channel {
 };
 
 /**
+ * struct cfg80211_p2p_ps - p2p power save params
+ *
+ * This structure ...
+ *
+ * @legacy_ps: 0=disable, 1=enable, 2=maximum_ps, -1=no change
+ * @opp_ps: 0=disable, 1=enable, -1=no change
+ * @ctwidnow: 0... - change in ms, -1=no change
+ * @count: 0..255 - count
+ * @start: Start time in ms from next TBTT
+ * @duration: Duration in ms
+ * @interval: interval in ms
+ */
+struct cfg80211_p2p_ps {
+	int	legacy_ps;
+
+	/* Opportunistic Power Save */
+	int	opp_ps;
+	int	ctwindow;
+
+	/* Notice of Absence */
+	u8	count;
+	int	start;
+	int	duration;
+	int	interval;
+
+	/* Index */
+	u8	index;
+};
+
+/**
  * enum ieee80211_rate_flags - rate flags
  *
  * Hardware/specification flags for rates. These are structured
@@ -2293,6 +2323,8 @@ struct wireless_dev {
 
 	int beacon_interval;
 
+	struct cfg80211_p2p_ps	p2p_ps;
+
 	u32 ap_unexpected_nlpid;
 
 #ifdef CONFIG_CFG80211_WEXT
@@ -2613,6 +2645,19 @@ extern int regulatory_hint(struct wiphy *wiphy, const char *alpha2);
 extern void wiphy_apply_custom_regulatory(
 	struct wiphy *wiphy,
 	const struct ieee80211_regdomain *regd);
+
+/**
+ * cfg80211_p2p_noa_notify - NOA set/change notification
+ * @dev: network device
+ * @p2p_ps: new p2p params
+ * @gfp: context flags
+ *
+ * This function is called when we change NOA settings to inform
+ * upper layer about this.
+ */
+void cfg80211_p2p_noa_notify(struct net_device *dev,
+			     struct cfg80211_p2p_ps *p2p_ps,
+			     gfp_t gfp);
 
 /**
  * freq_reg_info - get regulatory information for the given frequency

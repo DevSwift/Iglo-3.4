@@ -155,7 +155,9 @@ void ux500_suspend_dbg_end(void)
 		attempts++;
 		pr_info("Suspend test: %d done\n", attempts);
 		suspend_test_count--;
+#ifdef CONFIG_WAKELOCK
 		wake_lock(&main_wake_lock);
+#endif
 
 		if (suspend_test_current < deepsleeps_done) {
 			suspend_test_current = deepsleeps_done;
@@ -171,7 +173,9 @@ void ux500_suspend_dbg_end(void)
 			       TEST_FAILS);
 		} else if (suspend_test_count > 0) {
 			msleep(100);
+#ifdef CONFIG_WAKELOCK
 			wake_unlock(&main_wake_lock);
+#endif
 		}
 
 		if (suspend_test_count == 0)

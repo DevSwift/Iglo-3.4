@@ -285,6 +285,8 @@ struct ieee80211_bss_conf {
 	u16 ht_operation_mode;
 	s32 cqm_rssi_thold;
 	u32 cqm_rssi_hyst;
+	u32 cqm_beacon_miss_thold;
+	u32 cqm_tx_fail_thold;
 	enum nl80211_channel_type channel_type;
 	__be32 arp_addr_list[IEEE80211_BSS_ARP_ADDR_LIST_LEN];
 	u8 arp_addr_cnt;
@@ -763,6 +765,7 @@ enum ieee80211_conf_changed {
 	IEEE80211_CONF_CHANGE_CHANNEL		= BIT(6),
 	IEEE80211_CONF_CHANGE_RETRY_LIMITS	= BIT(7),
 	IEEE80211_CONF_CHANGE_IDLE		= BIT(8),
+	IEEE80211_CONF_CHANGE_P2P_PS		= BIT(9),
 };
 
 /**
@@ -833,6 +836,7 @@ struct ieee80211_conf {
 	struct ieee80211_channel *channel;
 	enum nl80211_channel_type channel_type;
 	enum ieee80211_smps_mode smps_mode;
+	struct cfg80211_p2p_ps p2p_ps;
 };
 
 /**
@@ -1201,6 +1205,9 @@ enum ieee80211_hw_flags {
 	IEEE80211_HW_AP_LINK_PS				= 1<<22,
 	IEEE80211_HW_TX_AMPDU_SETUP_IN_HW		= 1<<23,
 	IEEE80211_HW_SCAN_WHILE_IDLE			= 1<<24,
+	IEEE80211_HW_SUPPORTS_CQM_BEACON_MISS		= 1<<25,
+	IEEE80211_HW_SUPPORTS_CQM_TX_FAIL		= 1<<26,
+	IEEE80211_HW_SUPPORTS_P2P_PS			= 1<<27,
 };
 
 /**
@@ -2279,6 +2286,15 @@ struct ieee80211_hw *ieee80211_alloc_hw(size_t priv_data_len,
 int ieee80211_register_hw(struct ieee80211_hw *hw);
 
 /**
+ * ieee80211_driver_hang_notify - inform upper layer about driver hang
+ * @gfp: context flag
+ *
+ * In case of FW/driver failure, send a notification to upper layers
+ * to take a recovery actions.
+ */
+void ieee80211_driver_hang_notify(struct wiphy *wiphy, gfp_t gfp);
+
+/**
  * struct ieee80211_tpt_blink - throughput blink description
  * @throughput: throughput in Kbit/sec
  * @blink_time: blink time in milliseconds
@@ -3325,6 +3341,19 @@ void ieee80211_iter_keys(struct ieee80211_hw *hw,
 struct sk_buff *ieee80211_ap_probereq_get(struct ieee80211_hw *hw,
 					  struct ieee80211_vif *vif);
 
+
+/**
+ * ieee80211_p2p_noa_notify - driver set/change NOA params
+ * @vif: &struct ieee80211_vif pointer from the add_interface callback.
+ * @p2p_ps: new NOA params set/change by driver
+ * @gfp: context flag
+ *
+ * Inform upper layer about NOA change
+ */
+void ieee80211_p2p_noa_notify(struct ieee80211_vif *vif,
+			      struct cfg80211_p2p_ps *p2p_ps,
+			      gfp_t gfp);
+
 /**
  * ieee80211_beacon_loss - inform hardware does not receive beacons
  *
@@ -3418,6 +3447,34 @@ void ieee80211_enable_dyn_ps(struct ieee80211_vif *vif);
 void ieee80211_cqm_rssi_notify(struct ieee80211_vif *vif,
 			       enum nl80211_cqm_rssi_threshold_event rssi_event,
 			       gfp_t gfp);
+
+/**
+ * ieee80211_cqm_tx_fail_notify - inform a configured connection quality
+ *	monitoring beacon miss threshold triggered
+ *
+ * @vif: &struct ieee80211_vif pointer from the add_interface callback.
+ * @gfp: context flag
+ *
+ * When the %IEEE80211_HW_SUPPORTS_CQM_TX_FAIL is set, and a connection
+ * quality monitoring is configured with an tx failure threshold, the driver
+ * whenever the desired amount of consecutive TX attempts is failed.
+ */
+void ieee80211_cqm_tx_fail_notify(struct ieee80211_vif *vif,
+				  gfp_t gfp);
+
+/**
+ * ieee80211_cqm_beacon_miss_notify - inform a configured connection quality
+ *	monitoring beacon miss threshold triggered
+ *
+ * @vif: &struct ieee80211_vif pointer from the add_interface callback.
+ * @gfp: context flag
+ *
+ * When the %IEEE80211_HW_SUPPORTS_CQM_BEACON_MISS is set, and a connection
+ * quality monitoring is configured with an beacon miss threshold, the driver
+ * will inform whenever the desired amount of consecutive beacons is missed.
+ */
+void ieee80211_cqm_beacon_miss_notify(struct ieee80211_vif *vif,
+				      gfp_t gfp);
 
 /**
  * ieee80211_get_operstate - get the operstate of the vif

@@ -938,13 +938,12 @@ static struct platform_device *mop500_platform_devs[] __initdata = {
 	&ux500_mmio_device,
 #endif
 	&ux500_hwmem_device,
-#ifdef CONFIG_FB_MCDE
-	&u8500_mcde_device,
-#endif
-#ifdef CONFIG_FB_B2R2
+	&ux500_mcde_device,
+	&u8500_dsilink_device[0],
+	&u8500_dsilink_device[1],
+	&u8500_dsilink_device[2],
 	&u8500_b2r2_device,
 	&u8500_b2r2_blt_device,
-#endif
 	&u8500_thsens_device,
 #ifdef CONFIG_LEDS_PWM
 	&ux500_leds_device,
@@ -1183,7 +1182,7 @@ static struct platform_device *snowball_platform_devs[] __initdata = {
 #endif
 	&snowball_sbnet_dev,
 #ifdef CONFIG_FB_MCDE
-	&u8500_mcde_device,
+	&ux500_mcde_device,
 #endif
 #ifdef CONFIG_FB_B2R2
 	&u8500_b2r2_device,
@@ -1244,18 +1243,6 @@ static void __init mop500_init_machine(void)
 			sizeof(mop500_ske_keypad_data));
 #endif
 
-#ifdef CONFIG_ANDROID_STE_TIMED_VIBRA
-	mop500_vibra_init();
-#endif
-	platform_device_register(&ab8500_device);
-
-	i2c_register_board_info(0, mop500_i2c0_devices,
-			ARRAY_SIZE(mop500_i2c0_devices));
-	i2c_register_board_info(2, mop500_i2c2_devices,
-			ARRAY_SIZE(mop500_i2c2_devices));
-
-	/* This board has full regulator constraints */
-	regulator_has_full_constraints();
 }
 
 static void __init snowball_init_machine(void)
@@ -1293,13 +1280,6 @@ static void __init snowball_init_machine(void)
 	mop500_wlan_init(parent);
 #endif
 
-	platform_device_register(&ab8500_device);
-
-	i2c_register_board_info(0, snowball_i2c0_devices,
-			ARRAY_SIZE(snowball_i2c0_devices));
-
-	/* This board has full regulator constraints */
-	regulator_has_full_constraints();
 }
 
 static void __init hrefv60_init_machine(void)

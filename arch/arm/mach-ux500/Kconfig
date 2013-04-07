@@ -60,6 +60,27 @@ config MACH_SNOWBALL
 	help
 	  Include support for the snowball development platform.
 
+config MACH_U8500_KUMQUAT
+	bool "Sony Ericsson Kumquat"
+	select WLAN_PMUEN_UX500
+	select CW1200_USE_GPIO_IRQ
+	help
+	  Support for Sony Ericsson Kumquat devices.
+
+config MACH_U8500_PDP
+	bool "Sony Ericsson PDP"
+	select WLAN_PMUEN_UX500
+	select CW1200_USE_GPIO_IRQ
+	help
+	  Support for Sony Ericsson PDP devices.
+
+config MACH_U8500_PDP_R2
+	bool "Sony Ericsson PDP R2"
+	select WLAN_PMUEN_UX500
+	select CW1200_USE_GPIO_IRQ
+	help
+	  Support for Sony Ericsson PDP R2 devices.
+
 config MACH_U5500
 	bool "U5500 Development platform"
 	select UX500_SOC_DB5500

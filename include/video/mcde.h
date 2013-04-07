@@ -96,6 +96,11 @@ struct mcde_col_transform {
 	u16 offset[3];
 };
 
+struct mcde_oled_transform {
+	u16 matrix[3][3];
+	u16 offset[3];
+};
+
 /* DSI video mode */
 enum mcde_dsi_vid_mode {
 	NON_BURST_MODE_WITH_SYNC_EVENT = 0,
@@ -114,6 +119,13 @@ enum mcde_dsi_vid_mode {
 #define DPI_ACT_ON_FALLING_EDGE	8 /* drive data on the falling edge of the
 				   * pixel clock
 				   */
+
+/*
+ * Default values for DCS address mode.
+ * Can be overrridden in display driver.
+ */
+#define DSI_DCS_ADDR_MODE_NORMAL_DEFAULT	0x00
+#define DSI_DCS_ADDR_MODE_HOR_FLIP_DEFAULT	0x40
 
 struct mcde_port {
 	enum mcde_port_type type;
@@ -158,6 +170,10 @@ struct mcde_port {
 			u32 lcd_freq;
 		} dpi;
 	} phy;
+	struct {
+		u8 normal;	/* Value for no horizontal flip */
+		u8 hor_flip;	/* Value for horizontal flip */
+	} dcs_addr_mode;
 };
 
 /* Overlay pixel formats (input) *//* REVIEW: Define byte order */
@@ -173,9 +189,10 @@ enum mcde_ovly_pix_fmt {
 
 /* Display power modes */
 enum mcde_display_power_mode {
-	MCDE_DISPLAY_PM_OFF     = 0, /* Power off */
-	MCDE_DISPLAY_PM_STANDBY = 1, /* DCS sleep mode */
-	MCDE_DISPLAY_PM_ON      = 2, /* DCS normal mode, display on */
+	MCDE_DISPLAY_PM_OFF          = 0, /* Power off */
+	MCDE_DISPLAY_PM_STANDBY      = 1, /* DCS sleep mode */
+	MCDE_DISPLAY_PM_INTERMEDIATE = 2, /* DCS normal, but display off */
+	MCDE_DISPLAY_PM_ON           = 3, /* DCS normal mode, display on */
 };
 
 /* Display rotation */
@@ -196,6 +213,10 @@ enum mcde_display_rotation {
 #define MCDE_MAX_HEIGHT 2048
 #define MCDE_BUF_START_ALIGMENT 8
 #define MCDE_BUF_LINE_ALIGMENT 8
+
+#define MCDE_PIXFETCH_WTRMRKLVL_OVL0	48
+#define MCDE_PIXFETCH_WTRMRKLVL_OVL1	64
+#define MCDE_PIXFETCH_WTRMRKLVL_OVL2	192
 
 /* Tv-out defines */
 #define MCDE_CONFIG_TVOUT_BACKGROUND_LUMINANCE		0x83
@@ -283,12 +304,15 @@ int mcde_chnl_set_video_mode(struct mcde_chnl_state *chnl,
 /* TODO: Remove rotbuf* parameters when ESRAM allocator is implemented*/
 int mcde_chnl_set_rotation(struct mcde_chnl_state *chnl,
 					enum mcde_display_rotation rotation);
+bool mcde_chnl_is_rotated_90(struct mcde_chnl_state *chnl);
 int mcde_chnl_set_power_mode(struct mcde_chnl_state *chnl,
 				enum mcde_display_power_mode power_mode);
 
 int mcde_chnl_apply(struct mcde_chnl_state *chnl);
+void mcde_chnl_set_dirty(struct mcde_chnl_state *chnl);
+void mcde_chnl_update_sync_src(struct mcde_chnl_state *chnl,
+				enum mcde_sync_src src);
 int mcde_chnl_update(struct mcde_chnl_state *chnl,
-			struct mcde_rectangle *update_area,
 			bool tripple_buffer);
 void mcde_chnl_put(struct mcde_chnl_state *chnl);
 
@@ -296,6 +320,13 @@ void mcde_chnl_stop_flow(struct mcde_chnl_state *chnl);
 
 void mcde_chnl_enable(struct mcde_chnl_state *chnl);
 void mcde_chnl_disable(struct mcde_chnl_state *chnl);
+void mcde_formatter_enable(struct mcde_chnl_state *chnl);
+void mcde_disable_ulpm_support(bool disable);
+void mcde_extra_oled_conversion(bool enable);
+void set_rgb_extra_matrix(struct mcde_oled_transform *matrix);
+struct mcde_oled_transform *get_rgb_extra_matrix(void);
+void set_yuv_extra_matrix(struct mcde_oled_transform *matrix);
+struct mcde_oled_transform *get_yuv_extra_matrix(void);
 
 /* MCDE overlay */
 struct mcde_ovly_state;
@@ -371,6 +402,21 @@ int mcde_dsi_set_max_pkt_size(struct mcde_chnl_state *chnl);
 #define MCDE_IRQ     "MCDE IRQ"
 #define MCDE_IO_AREA "MCDE I/O Area"
 
+/*
+ * Default pixelfetch watermark levels per overlay.
+ * Values are in pixels and 2 basic rules should be followed:
+ * 1. The value should be at least 256 bits.
+ * 2. The sum of all active overlays pixelfetch watermark level multiplied with
+ *    bits per pixel, should be lower than the size of input_fifo_size in bits.
+ * 3. The value should be a multiple of a line (256 bits).
+ */
+#define MCDE_PIXFETCH_WTRMRKLVL_OVL0 48		/* LCD 32 bpp */
+#define MCDE_PIXFETCH_WTRMRKLVL_OVL1 64		/* LCD 16 bpp */
+#define MCDE_PIXFETCH_WTRMRKLVL_OVL2 128	/* HDMI 32 bpp */
+#define MCDE_PIXFETCH_WTRMRKLVL_OVL3 192	/* HDMI 16 bpp */
+#define MCDE_PIXFETCH_WTRMRKLVL_OVL4 16
+#define MCDE_PIXFETCH_WTRMRKLVL_OVL5 16
+
 struct mcde_platform_data {
 	/* DPI */
 	u8 outmux[5]; /* MCDE_CONF0.OUTMUXx */
@@ -380,6 +426,8 @@ struct mcde_platform_data {
 	u32 rotbuf1;
 	u32 rotbuf2;
 	u32 rotbufsize;
+
+	u32 pixelfetchwtrmrk[6];
 
 	const char *regulator_vana_id;
 	const char *regulator_mcde_epod_id;
